@@ -1,7 +1,7 @@
 {
-  "name": "mazcab-bot",
+  "name": "discord-goebie-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Discord bot for forming teams in Mazcab Academy discord server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
