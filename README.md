@@ -35,5 +35,5 @@ Create a feature branch and open a PR to develop branch.
 - [x] Add ancient apprentice in roles
 - [x] Tag Goebie Guide in the team list in the HOSTS: section.
 - [x] Allow channels to change to ##gt-sign-up (20gt-signup for example). The time in team list message should be reflected to work. Same goes for ##gt-team-list and ##gt-hosts.
-- [] Need propper error handling everywhere
-- [] Everything needs some refactoring
+- [ ] Need propper error handling everywhere
+- [ ] Everything needs some refactoring
