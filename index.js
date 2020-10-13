@@ -15,6 +15,12 @@ client.on("message", (msg) => {
   let channelMatch = msg.channel.name.match(channelRegexp);
 
   if (channelMatch === null) {
+    try {
+      processHostCommand(msg);
+    } catch (err) {
+      sendErrorMessage(msg, err);
+      return;
+    }
     return;
   }
 
@@ -93,6 +99,93 @@ client.on("message", (msg) => {
   });
 })
 client.login(process.env.BOT_TOKEN)
+
+const processHostCommand = (msg) => {
+  let hostChannelRegexp = new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`)
+  let hostChannelMatch = msg.channel.name.match(hostChannelRegexp);
+  if (hostChannelMatch === null) {
+    return;
+  }
+  let gt = hostChannelMatch[1];
+  let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
+
+  let hostCommandMatch = msg.content.match(/^!host (.*)$/);
+  let date = null;
+  if (hostCommandMatch !== null) {
+    date = hostCommandMatch[1];
+    momentDate = moment(hostCommandMatch[1], constants.SIGN_UP_DATE_FORMAT, true);
+    if (!momentDate.isValid()) {
+      throw constants.BAD_HOST_ERROR;
+    } else if (momentDate.isBefore(moment(), 'day')) {
+      throw constants.BAD_HOST_ERROR;
+    } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
+      throw constants.BAD_HOST_TOO_EARLY_ERROR;
+    }
+  } else {
+    let removeCommandMatch = msg.content.match(/^!remove (<.*>) (.*)$/);
+    if (removeCommandMatch === null) {
+      return;
+    }
+    var user = removeCommandMatch[1].replace('!', '');
+    date = removeCommandMatch[2];
+    momentDate = moment(date, constants.SIGN_UP_DATE_FORMAT, true);
+    if (!momentDate.isValid()) {
+      throw constants.BAD_SIGNUP_DATE_ERROR;
+    } else if (momentDate.isBefore(moment(), 'day')) {
+      throw constants.BAD_SIGNUP_DATE_ERROR;
+    } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
+      throw constants.BAD_SIGNUP_TOO_EARLY_ERROR;
+    }
+  }
+
+  findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
+    if (!teamMessage.author.bot) {
+      return;
+    }
+    if (!user) {
+      let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
+      teamMessage.edit(content);
+      msg.react("👍")
+    } else {
+      let replaceRegexp = new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm');
+      let replaceMatch = teamMessage.content.match(replaceRegexp);
+      if (replaceMatch === null) {
+        throw constants.BAD_REMOVE_ERROR;
+      }
+      let number = replaceMatch[1];
+      let replaceText = replaceMatch[2];
+      let replacedText;
+      switch (number) {
+        case '2':
+        case '3':
+          replacedText = 'Spot reserved for Ancient Goebie or higher';
+          break;
+        case '4':
+        case '5':
+          replacedText = 'Spot reserved for Goebie Ranger or higher';
+          break
+        case '6':
+        case '7':
+          replacedText = 'Spot reserved for Goebie Fetcher or higher';
+          break;
+        case '8':
+          replacedText = 'Spot reserved for Goebie Caretaker or higher';
+          break;
+        case '9':
+        case '10':
+          replacedText = 'Spot reserved for Young Goebie or higher';
+          break
+        default: 
+          throw constants.BAD_REMOVE_ERROR;
+      }
+      let content = teamMessage.content.replace(replaceText, replacedText);
+      teamMessage.edit(content);
+      msg.react("👍")
+    }
+  }).catch(error => {
+    handleError(error);
+  });
+}
 
 const findTeamListMessage = (teamChannel, date, gt) => {
   return teamChannel.fetch().then(resp => {
