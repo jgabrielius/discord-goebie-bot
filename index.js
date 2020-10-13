@@ -4,31 +4,28 @@ const {UserError} = require('./errors');
 const Discord = require("discord.js")
 const client = new Discord.Client()
 var moment = require('moment');
+
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
+
 client.on("message", (msg) => {
   try {
-
     if (msg.author.bot || !msg.channel.name) {
       return;
     }
 
     let channelMatch = msg.channel.name.match(new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`));
     if (channelMatch === null) {
-      try {
-        processHostCommand(msg);
-      } catch (err) {
-        sendErrorMessage(msg, err);
-      }
+      processHostCommand(msg);
       return;
     }
 
-    let gt = channelMatch[1];
+    var gt = channelMatch[1];
     var teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
     //Find highest role index user can do
-    let highestRoleIndex = -1;
+    var highestRoleIndex = -1;
     msg.member.roles.cache.each(role => {
       let name = role.name;
       if (!constants.ROLES.includes(name)) {
@@ -60,8 +57,7 @@ client.on("message", (msg) => {
     }
     let content = teamMessage.content;
     if (checkUserSignedUp(content, msg.author)) {
-      sendErrorMessage(msg, constants.BAD_SIGNUP_ALREADY_SIGNED)
-      return;
+      throw new UserError(constants.ERRORS.SIGN_UP.ALREADY_SIGNED);
     }
     let freeRoles = content.match(/(?<=Spot reserved for ).*?(?= or higher)/g);
     let backup = false;
@@ -84,18 +80,23 @@ client.on("message", (msg) => {
     }
     if (backup) {
       content = content + '\n' + msg.author.toString() + ' ' + request.role;
-      teamMessage.edit(content);
+      teamMessage.edit(content).catch(err => {handleError(err)});;
       msg.react("👍")
       msg.react("🅱️")
     } else {
       // Replace filled role with user
       let regexp = new RegExp('Spot reserved for ' + filledRole + ' or higher');
       content = content.replace(regexp, msg.author.toString() + ' ' + request.role);
-      teamMessage.edit(content);
+      teamMessage.edit(content).catch(err => {handleError(err)});;
       msg.react("👍")
     }
-  }).catch(error => {
-    handleError(error);
+  }).catch(err => {
+    if (err instanceof UserError) {
+      sendErrorMessage(msg, err);
+    } else {
+      throw err;
+    }
+    return;
   });
 })
 client.login(process.env.BOT_TOKEN)
@@ -105,6 +106,7 @@ const processHostCommand = (msg) => {
   if (hostChannelMatch === null) {
     return;
   }
+
   let gt = hostChannelMatch[1];
   let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
@@ -123,17 +125,17 @@ const processHostCommand = (msg) => {
 
   findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
-      return;
+      //return;
     }
+    //If command is !host
     if (user === null) {
       let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
-      teamMessage.edit(content);
+      teamMessage.edit(content).catch(err => {handleError(err)});;
       msg.react("👍")
     } else {
-      let replaceRegexp = new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm');
-      let replaceMatch = teamMessage.content.match(replaceRegexp);
+      let replaceMatch = teamMessage.content.match(new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm'));
       if (replaceMatch === null) {
-        throw constants.BAD_REMOVE_ERROR;
+        throw new UserError(constants.ERRORS.HOST.USER_NOT_FOUND);
       }
       let number = replaceMatch[1];
       let replaceText = replaceMatch[2];
@@ -159,14 +161,19 @@ const processHostCommand = (msg) => {
           replacedText = 'Spot reserved for Young Goebie or higher';
           break
         default: 
-          throw constants.BAD_REMOVE_ERROR;
+         throw new UserError(constants.ERRORS.UNKNOWN);
       }
       let content = teamMessage.content.replace(replaceText, replacedText);
-      teamMessage.edit(content);
+      teamMessage.edit(content).catch(err => {handleError(err)});
       msg.react("👍")
     }
-  }).catch(error => {
-    handleError(error);
+  }).catch(err => {
+    if (err instanceof UserError) {
+      sendErrorMessage(msg, err);
+    } else {
+      handleError(err);
+    }
+    return;
   });
 }
 
