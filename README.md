@@ -34,4 +34,4 @@ Create a feature branch and open a PR to develop branch.
 - [x] Only allow signup once per day. If a user has signed up already message them with an error (like signups). Add a constant so local development can still have multiple signups for user easily.
 - [x] Add ancient apprentice in roles
 - [x] Tag Goebie Guide in the team list in the HOSTS: section.
-- [ ] Allow channels to change to ##gt-sign-up (20gt-signup for example). The time in team list message should be reflected to work. Same goes for ##gt-team-list and ##gt-hosts.
+- [x] Allow channels to change to ##gt-sign-up (20gt-signup for example). The time in team list message should be reflected to work. Same goes for ##gt-team-list and ##gt-hosts.
