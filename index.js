@@ -105,7 +105,7 @@ const findTeamListMessage = (teamChannel, date) => {
         let tempMoment = moment().add(i, 'day');
         let tempDate = tempMoment.format(constants.SIGN_UP_DATE_FORMAT);
         if (!foundDates.includes(tempDate)) {
-          return teamChannel.send(constants.TEAM_LIST_TEMPLATE(tempDate)).then(message => {
+          return teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild)).then(message => {
             if (dateMoment.isSame(tempMoment, 'day')) {
               return message;
             }
@@ -156,6 +156,24 @@ const parseSignupRequest = msg => {
   }
   request.role = role[0];
   return request;
+}
+
+const generateTeamListMessageText = (requestDate, guild) => {
+  let hostRole = guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
+  return `Raid team 1, 18.00 GT ${requestDate}
+
+HOST: ${hostRole}
+#2: Spot reserved for Ancient Goebie or higher
+#3: Spot reserved for Ancient Goebie or higher
+#4: Spot reserved for Goebie Ranger or higher
+#5: Spot reserved for Goebie Ranger or higher
+#6: Spot reserved for Goebie Fetcher or higher
+#7: Spot reserved for Goebie Fetcher or higher
+#8: Spot reserved for Goebie Caretaker or higher
+#9: Spot reserved for Young Goebie or higher
+#10: Spot reserved for Young Goebie or higher
+
+Backup:`
 }
 
 const sendErrorMessage = (originalMessage, message) => {
