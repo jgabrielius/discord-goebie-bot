@@ -44,6 +44,10 @@ client.on("message", (msg) => {
       return;
     }
     let content = teamMessage.content;
+    if (checkUserSignedUp(content, msg.author)) {
+      sendErrorMessage(msg, constants.BAD_SIGNUP_ALREADY_SIGNED)
+      return;
+    }
     let freeRoles = content.match(/(?<=Spot reserved for ).*?(?= or higher)/g);
     let backup = false;
     let filledRole;
@@ -159,6 +163,14 @@ const parseSignupRequest = msg => {
   }
   request.role = role[0];
   return request;
+}
+
+const checkUserSignedUp = (content, user) => {
+  if (process.env.ALLOW_MULTIPLE_SIGNUPS === 'true') {
+    return false;
+  }
+  let regexp = new RegExp(user.toString());
+  return !!content.match(regexp);
 }
 
 const generateTeamListMessageText = (requestDate, guild) => {
