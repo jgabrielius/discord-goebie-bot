@@ -1,5 +1,5 @@
 module.exports = {
-  ROLES: ['Young Goebie', 'Goebie Caretaker', 'Goebie Fetcher', 'Goebie Ranger', 'Ancient Goebie'],
+  ROLES: ['Young Goebie', 'Goebie Caretaker', 'Goebie Fetcher', 'Goebie Ranger', 'Ancient Apprentice', 'Ancient Goebie'],
   HOST_ROLE: 'Goebie Guide',
   SIGN_UP_CHANNEL: '18gt-sign-up',
   TEAM_LIST_CHANNEL: '18gt-team-list',
