@@ -1,5 +1,6 @@
 require("dotenv").config()
 const constants = require('./constants');
+const {UserError} = require('./errors');
 const Discord = require("discord.js")
 const client = new Discord.Client()
 var moment = require('moment');
@@ -7,50 +8,49 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
 client.on("message", (msg) => {
-  if (msg.author.bot || !msg.channel.name) {
-    return;
-  }
-
-  let channelRegexp = new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`)
-  let channelMatch = msg.channel.name.match(channelRegexp);
-
-  if (channelMatch === null) {
-    try {
-      processHostCommand(msg);
-    } catch (err) {
-      sendErrorMessage(msg, err);
-      return;
-    }
-    return;
-  }
-
-  let gt = channelMatch[1];
-
-  let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
-
-  //Find highest role index user can do
-  let highestRoleIndex = -1;
-  msg.member.roles.cache.each(role => {
-    let name = role.name;
-    if (!constants.ROLES.includes(name)) {
-      return;
-    }
-    let roleIndex = constants.ROLES.findIndex(val => {return name === val});
-    if (roleIndex > highestRoleIndex) {
-      highestRoleIndex = roleIndex;
-    }
-  });
-
-  if (highestRoleIndex === -1) {
-    sendErrorMessage(msg, constants.BAD_SIGNUP_NO_ROLE_ERROR);
-    return;
-  }
-
-  let request;
   try {
-    request = parseSignupRequest(msg.content);
+
+    if (msg.author.bot || !msg.channel.name) {
+      return;
+    }
+
+    let channelMatch = msg.channel.name.match(new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`));
+    if (channelMatch === null) {
+      try {
+        processHostCommand(msg);
+      } catch (err) {
+        sendErrorMessage(msg, err);
+      }
+      return;
+    }
+
+    let gt = channelMatch[1];
+    var teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
+
+    //Find highest role index user can do
+    let highestRoleIndex = -1;
+    msg.member.roles.cache.each(role => {
+      let name = role.name;
+      if (!constants.ROLES.includes(name)) {
+        return;
+      }
+      let roleIndex = constants.ROLES.findIndex(val => {return name === val});
+      if (roleIndex > highestRoleIndex) {
+        highestRoleIndex = roleIndex;
+      }
+    });
+
+    if (highestRoleIndex === -1) {
+      throw new UserError(constants.ERRORS.SIGN_UP.NO_ROLE);
+    }
+
+    var request = parseSignupRequest(msg.content);
   } catch (err) {
-    sendErrorMessage(msg, err);
+    if (err instanceof UserError) {
+      sendErrorMessage(msg, err);
+    } else {
+      throw err;
+    }
     return;
   }
 
@@ -101,8 +101,7 @@ client.on("message", (msg) => {
 client.login(process.env.BOT_TOKEN)
 
 const processHostCommand = (msg) => {
-  let hostChannelRegexp = new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`)
-  let hostChannelMatch = msg.channel.name.match(hostChannelRegexp);
+  let hostChannelMatch = msg.channel.name.match(new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`));
   if (hostChannelMatch === null) {
     return;
   }
@@ -110,39 +109,23 @@ const processHostCommand = (msg) => {
   let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
   let hostCommandMatch = msg.content.match(/^!host (.*)$/);
-  let date = null;
+  let date = null, user = null;
   if (hostCommandMatch !== null) {
-    date = hostCommandMatch[1];
-    momentDate = moment(hostCommandMatch[1], constants.SIGN_UP_DATE_FORMAT, true);
-    if (!momentDate.isValid()) {
-      throw constants.BAD_HOST_ERROR;
-    } else if (momentDate.isBefore(moment(), 'day')) {
-      throw constants.BAD_HOST_ERROR;
-    } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
-      throw constants.BAD_HOST_TOO_EARLY_ERROR;
-    }
+    date = validateSignUpDate(hostCommandMatch[1]);
   } else {
     let removeCommandMatch = msg.content.match(/^!remove (<.*>) (.*)$/);
     if (removeCommandMatch === null) {
       return;
     }
-    var user = removeCommandMatch[1].replace('!', '');
-    date = removeCommandMatch[2];
-    momentDate = moment(date, constants.SIGN_UP_DATE_FORMAT, true);
-    if (!momentDate.isValid()) {
-      throw constants.BAD_SIGNUP_DATE_ERROR;
-    } else if (momentDate.isBefore(moment(), 'day')) {
-      throw constants.BAD_SIGNUP_DATE_ERROR;
-    } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
-      throw constants.BAD_SIGNUP_TOO_EARLY_ERROR;
-    }
+    user = removeCommandMatch[1].replace('!', '');
+    date = validateSignUpDate(removeCommandMatch[2])
   }
 
   findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
       return;
     }
-    if (!user) {
+    if (user === null) {
       let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
       teamMessage.edit(content);
       msg.react("👍")
@@ -230,26 +213,18 @@ const findTeamListMessage = (teamChannel, date, gt) => {
 const parseSignupRequest = msg => {
   let messageParts = msg.split('\n'), request = {};
   if (![2,3].includes(messageParts.length)) {
-    throw constants.BAD_SIGNUP_ERROR;
+    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
 
   let date = messageParts[0].match(/^(?:Date: |Sign-up date: ?)?(.*)$/)
   if (date === null) {
-    throw constants.BAD_SIGNUP_ERROR;
+    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
-  momentDate = moment(date[0], constants.SIGN_UP_DATE_FORMAT, true);
-  if (!momentDate.isValid()) {
-    throw constants.BAD_SIGNUP_DATE_ERROR;
-  } else if (momentDate.isBefore(moment(), 'day')) {
-    throw constants.BAD_SIGNUP_DATE_ERROR;
-  } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
-    throw constants.BAD_SIGNUP_TOO_EARLY_ERROR;
-  }
-  request.date = date[0];
+  request.date = validateSignUpDate(date[0]);
 
   let rsn = messageParts[1].match(/^(?:RSN: ?)?(.*)$/)
   if (rsn === null) {
-    throw constants.BAD_SIGNUP_ERROR;
+    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
   request.rsn = rsn[0];
 
@@ -275,6 +250,18 @@ const checkUserSignedUp = (content, user) => {
   return !!content.match(regexp);
 }
 
+const validateSignUpDate = date => {
+  momentDate = moment(date, constants.SIGN_UP_DATE_FORMAT, true);
+  if (!momentDate.isValid()) {
+    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_DATE);
+  } else if (momentDate.isBefore(moment(), 'day')) {
+    throw new UserError(constants.ERRORS.SIGN_UP.PAST_DATE);
+  } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
+    throw new UserError(constants.ERRORS.SIGN_UP.EARLY_DATE);
+  }
+  return date;
+}
+
 const generateTeamListMessageText = (requestDate, guild, gt) => {
   let hostRole = guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
   return `Raid team 1, ${gt}.00 GT ${requestDate}
@@ -295,9 +282,9 @@ Backup:`
 
 const sendErrorMessage = (originalMessage, message) => {
   originalMessage.react("❌")
-  originalMessage.author.send(message);
+  originalMessage.author.send(message.toString());
 }
 
 const handleError = error => {
-  console.log(error);
+  console.error(error);
 }

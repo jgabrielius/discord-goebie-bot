@@ -23,5 +23,24 @@ Example:
 
 Sign-up date: 20/12/2018
 RSN: Luckyluke91
+Role Request: Poison Tank`,
+  ERRORS: {
+    SIGN_UP: {
+      PAST_DATE: 'Hello, your request has been rejected. Reason: sign up date cannot be in the past.',
+      INVALID_DATE: 'Hello, your request has been rejected. Reason: sign up date invalid.',
+      EARLY_DATE: 'Hello, your request has been rejected. Reason: you can only sign up 5 days in advance.',
+      NO_ROLE: 'Hello, your request has been rejected. Reason: you have no role assigned.',
+      INVALID_FORMAT: `Hello, your sign up has been rejected. Reason: invalid format. Please use the correct sign up format:
+
+Sign-up date: <DD/MM/YYYY>
+RSN: <Username>
+Role Request: <Request, N/A if you don't mind>
+
+Example:
+
+Sign-up date: 20/12/2018
+RSN: Luckyluke91
 Role Request: Poison Tank`
+    }
+  }
 }
