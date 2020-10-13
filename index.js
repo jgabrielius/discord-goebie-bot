@@ -200,19 +200,26 @@ const findTeamListMessage = (teamChannel, date, gt) => {
       }
 
       //Have to create all signups up to that date
+      let promises = [];
       for(let i = 0; i <= constants.MAX_DAYS_IN_ADVANCE; i++) {
         let tempMoment = moment().add(i, 'day');
         let tempDate = tempMoment.format(constants.SIGN_UP_DATE_FORMAT);
         if (!foundDates.includes(tempDate)) {
-          return teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild, gt)).then(message => {
+          if (dateMoment.isBefore(tempMoment, 'day')) {
+            break;
+          }
+          promises.push(teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild, gt)).then(message => {
             if (dateMoment.isSame(tempMoment, 'day')) {
-              return message;
+              teamMessage = message;
             }
           }).catch(error => {
             handleError(error);
-          });
+          }));
         }
       }
+      return Promise.all(promises).then(() => {
+        return teamMessage
+      })
     })
   })
 }
