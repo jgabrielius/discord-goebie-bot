@@ -28,7 +28,7 @@ And the following roles:
 Create a feature branch and open a PR to develop branch.
 # TODO Features
 - [x] Change sign up to 5 days in advance
-- [ ] Add "!host <D/M/YYYY>" command for use in 18gt-hosts channel. This command will make the user who posted a HOST in team list if he has "Goebie Guide" role. If team list isn't made yet it should be created (same as sign ups)
+- [x] Add "!host <D/M/YYYY>" command for use in 18gt-hosts channel. This command will make the user who posted a HOST in team list if he has "Goebie Guide" role. If team list isn't made yet it should be created (same as sign ups)
 - [ ] Add "!remove <@Username> <D/M/YYYY>"  command for use in 18gt-hosts channel. This command will remove the tagged person from team list for that day if he's signed up. Also only available for "Goebie Guide" role.
 - [x] Check if teamlist was posted by a person. If it was, return and don't process the signup. This is to help transition the bot in production and also allows users to overwrite the bot for sign ups.
 - [x] Only allow signup once per day. If a user has signed up already message them with an error (like signups). Add a constant so local development can still have multiple signups for user easily.

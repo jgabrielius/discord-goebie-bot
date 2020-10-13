@@ -15,6 +15,12 @@ client.on("message", (msg) => {
   let channelMatch = msg.channel.name.match(channelRegexp);
 
   if (channelMatch === null) {
+    try {
+      processHostCommand(msg);
+    } catch (err) {
+      sendErrorMessage(msg, err);
+      return;
+    }
     return;
   }
 
@@ -93,6 +99,42 @@ client.on("message", (msg) => {
   });
 })
 client.login(process.env.BOT_TOKEN)
+
+const processHostCommand = (msg) => {
+  let hostChannelRegexp = new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`)
+  let hostChannelMatch = msg.channel.name.match(hostChannelRegexp);
+  if (hostChannelMatch === null) {
+    return;
+  }
+  let gt = hostChannelMatch[1];
+  
+  let hostCommandMatch = msg.content.match(/^!host (.*)$/);
+  let date = null;
+  if (hostCommandMatch !== null) {
+    date = hostCommandMatch[1];
+    momentDate = moment(hostCommandMatch[1], constants.SIGN_UP_DATE_FORMAT, true);
+    if (!momentDate.isValid()) {
+      throw constants.BAD_HOST_ERROR;
+    } else if (momentDate.isBefore(moment(), 'day')) {
+      throw constants.BAD_HOST_ERROR;
+    } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
+      throw constants.BAD_HOST_TOO_EARLY_ERROR;
+    }
+  }
+
+  let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
+
+  findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
+    if (!teamMessage.author.bot) {
+      return;
+    }
+    let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
+    teamMessage.edit(content);
+    msg.react("👍")
+  }).catch(error => {
+    handleError(error);
+  });
+}
 
 const findTeamListMessage = (teamChannel, date, gt) => {
   return teamChannel.fetch().then(resp => {
