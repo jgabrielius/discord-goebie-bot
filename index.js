@@ -40,6 +40,9 @@ client.on("message", (msg) => {
   }
 
   findTeamListMessage(teamChannel, request.date).then(teamMessage => {
+    if (!teamMessage.author.bot) {
+      return;
+    }
     let content = teamMessage.content;
     let freeRoles = content.match(/(?<=Spot reserved for ).*?(?= or higher)/g);
     let backup = false;
