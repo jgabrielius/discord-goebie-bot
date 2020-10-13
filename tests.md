@@ -1,6 +1,20 @@
 # Tests
 These are the manual tests to run to ensure bot is functioning properly:
-1. Test signup with all different roles. Make sure user gets correct spot in team list based on role. While testing try these variations: long format, short format, with role request, without role request.
+1. Test signup with all different roles. Make sure user gets correct spot in team list based on role.
+Test these formats:
+    * Long format
+    * Short format
+    * With role request
+    * Without role Request
+    * Today
+    * Multiple days ahead
+Test Signup with each these roles:
+    * Ancient Goebie
+    * Ancient Apprentice
+    * Goebie Ranger
+    * Goebie Fetcher
+    * Goebie Caretaker
+    * Young Goebie
 2. Try these failed signups:
 	* Yesterday's date
 	* Nonsense request
