@@ -227,13 +227,13 @@ const parseSignupRequest = msg => {
   if (date === null) {
     throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
-  request.date = validateSignUpDate(date[0]);
+  request.date = validateSignUpDate(date[1]);
 
   let rsn = messageParts[1].match(/^(?:RSN: ?)?(.*)$/)
   if (rsn === null) {
     throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
-  request.rsn = rsn[0];
+  request.rsn = rsn[1];
 
   if (messageParts.length === 2) {
     request.role = '';
@@ -245,7 +245,7 @@ const parseSignupRequest = msg => {
     request.role = '';
     return request;
   }
-  request.role = role[0];
+  request.role = role[1];
   return request;
 }
 
