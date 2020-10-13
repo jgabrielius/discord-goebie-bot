@@ -1,8 +1,9 @@
 module.exports = {
   ROLES: ['Young Goebie', 'Goebie Caretaker', 'Goebie Fetcher', 'Goebie Ranger', 'Ancient Apprentice', 'Ancient Goebie'],
   HOST_ROLE: 'Goebie Guide',
-  SIGN_UP_CHANNEL: '18gt-sign-up',
-  TEAM_LIST_CHANNEL: '18gt-team-list',
+  SIGN_UP_CHANNEL: 'gt-sign-up',
+  TEAM_LIST_CHANNEL: 'gt-team-list',
+  HOSTS_CHANNEL: 'gt-hosts',
   MAX_DAYS_IN_ADVANCE:  5,
   SIGN_UP_DATE_FORMAT: 'D/M/YYYY',
   BAD_SIGNUP_ALREADY_SIGNED: 'Hello, your sign up has been rejected. You have already registered for this date',

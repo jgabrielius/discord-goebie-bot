@@ -7,11 +7,20 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
 client.on("message", (msg) => {
-  if (msg.author.bot || msg.channel.name !== constants.SIGN_UP_CHANNEL) {
+  if (msg.author.bot || !msg.channel.name) {
     return;
   }
 
-  let teamChannel = client.channels.cache.find(channel => channel.name === constants.TEAM_LIST_CHANNEL);
+  let channelRegexp = new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`)
+  let channelMatch = msg.channel.name.match(channelRegexp);
+
+  if (channelMatch === null) {
+    return;
+  }
+
+  let gt = channelMatch[1];
+
+  let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
   //Find highest role index user can do
   let highestRoleIndex = -1;
@@ -39,7 +48,7 @@ client.on("message", (msg) => {
     return;
   }
 
-  findTeamListMessage(teamChannel, request.date).then(teamMessage => {
+  findTeamListMessage(teamChannel, request.date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
       return;
     }
@@ -85,7 +94,7 @@ client.on("message", (msg) => {
 })
 client.login(process.env.BOT_TOKEN)
 
-const findTeamListMessage = (teamChannel, date) => {
+const findTeamListMessage = (teamChannel, date, gt) => {
   return teamChannel.fetch().then(resp => {
     return resp.messages.fetch({limit: constants.MAX_DAYS_IN_ADVANCE + 1}).then(response => {
       let teamMessage = null;
@@ -112,7 +121,7 @@ const findTeamListMessage = (teamChannel, date) => {
         let tempMoment = moment().add(i, 'day');
         let tempDate = tempMoment.format(constants.SIGN_UP_DATE_FORMAT);
         if (!foundDates.includes(tempDate)) {
-          return teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild)).then(message => {
+          return teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild, gt)).then(message => {
             if (dateMoment.isSame(tempMoment, 'day')) {
               return message;
             }
@@ -173,9 +182,9 @@ const checkUserSignedUp = (content, user) => {
   return !!content.match(regexp);
 }
 
-const generateTeamListMessageText = (requestDate, guild) => {
+const generateTeamListMessageText = (requestDate, guild, gt) => {
   let hostRole = guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
-  return `Raid team 1, 18.00 GT ${requestDate}
+  return `Raid team 1, ${gt}.00 GT ${requestDate}
 
 HOST: ${hostRole}
 #2: Spot reserved for Ancient Goebie or higher
