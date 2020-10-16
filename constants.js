@@ -26,7 +26,9 @@ RSN: Luckyluke91
 Role Request: Poison Tank`
     },
     HOST: {
-      USER_NOT_FOUND: 'Hello, your request has been rejected. Reason: user not found.'
+      USER_NOT_FOUND: 'Hello, your request has been rejected. Reason: user not found.',
+      NOT_EMPTY: 'Hello, your request has been rejected. Reason: host spot already taken for that day.',
+      OTHER_HOST: 'Hello, your request has been rejected. Reason: you cannot remove other hosts.'
     },
     UNKNOWN: 'Hello, your request has been rejected. Reason: unknown.'
   }

@@ -111,28 +111,49 @@ const processHostCommand = (msg) => {
   let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
   let hostCommandMatch = msg.content.match(/^!host (.*)$/);
-  let date = null, user = null;
+  let date = null, user = null, selectedCommand = null;
   if (hostCommandMatch !== null) {
     date = validateSignUpDate(hostCommandMatch[1]);
+    selectedCommand = '!host';
   } else {
     let removeCommandMatch = msg.content.match(/^!remove (<.*>) (.*)$/);
-    if (removeCommandMatch === null) {
-      return;
+    if (removeCommandMatch !== null) {
+      user = removeCommandMatch[1].replace('!', '');
+      date = validateSignUpDate(removeCommandMatch[2]);
+      selectedCommand = '!remove';
+    } else {
+      let removeHostCommandMatch = msg.content.match(/^!removehost (.*)$/);
+      if (removeHostCommandMatch !== null) {
+        date = validateSignUpDate(removeHostCommandMatch[1]);
+        selectedCommand = '!removehost';
+      }
     }
-    user = removeCommandMatch[1].replace('!', '');
-    date = validateSignUpDate(removeCommandMatch[2])
+  }
+
+  if (selectedCommand === null) {
+    return;
   }
 
   findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
-      //return;
+      return;
     }
-    //If command is !host
-    if (user === null) {
+    let hostRole = teamMessage.channel.guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
+    if (selectedCommand === '!host') {
+      if (!teamMessage.content.match(new RegExp(`^HOST: ${hostRole.toString()}$`, 'm'))) {
+        throw new UserError(constants.ERRORS.HOST.NOT_EMPTY);
+      }
       let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
       teamMessage.edit(content).catch(err => {handleError(err)});;
       msg.react("👍")
-    } else {
+    } else if (selectedCommand === '!removehost'){
+      if (!teamMessage.content.match(new RegExp(`^HOST: ${msg.author.toString()}$`, 'm'))) {
+        throw new UserError(constants.ERRORS.HOST.OTHER_HOST);
+      }
+      let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, hostRole.toString());
+      teamMessage.edit(content).catch(err => {handleError(err)});;
+      msg.react("👍")
+    } else if (selectedCommand === '!remove') {
       let replaceMatch = teamMessage.content.match(new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm'));
       if (replaceMatch === null) {
         throw new UserError(constants.ERRORS.HOST.USER_NOT_FOUND);
