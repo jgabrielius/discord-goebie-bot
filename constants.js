@@ -5,6 +5,7 @@ module.exports = {
   TEAM_LIST_CHANNEL: 'gt-team-list',
   HOSTS_CHANNEL: 'gt-hosts',
   MAX_DAYS_IN_ADVANCE:  5,
+  RETRY_LIMIT: 20,
   SIGN_UP_DATE_FORMAT: 'D/M/YYYY',
   ERRORS: {
     SIGN_UP: {
@@ -30,6 +31,6 @@ Role Request: Poison Tank`
       NOT_EMPTY: 'Hello, your request has been rejected. Reason: host spot already taken for that day.',
       OTHER_HOST: 'Hello, your request has been rejected. Reason: you cannot remove other hosts.'
     },
-    UNKNOWN: 'Hello, your request has been rejected. Reason: unknown.'
+    UNKNOWN: 'Hello, your request has been rejected. Reason: unknown. please contact <@159663440011460609>'
   }
 }

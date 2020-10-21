@@ -2,7 +2,7 @@ require("dotenv").config()
 const constants = require('./constants');
 const {UserError} = require('./errors');
 const Discord = require("discord.js")
-const client = new Discord.Client()
+const client = new Discord.Client({retryLimit: constants.RETRY_LIMIT})
 var moment = require('moment');
 
 client.on("ready", () => {
@@ -10,48 +10,57 @@ client.on("ready", () => {
 })
 
 client.on("message", (msg) => {
-  try {
-    if (msg.author.bot || !msg.channel.name) {
-      return;
-    }
+  if (msg.author.bot || !msg.channel.name) {
+    return;
+  }
 
-    let channelMatch = msg.channel.name.match(new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`));
-    if (channelMatch === null) {
+  let channelMatch = msg.channel.name.match(new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`));
+  if (channelMatch === null) {
+    try {
       processHostCommand(msg);
-      return;
-    }
-
-    var gt = channelMatch[1];
-    var teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
-
-    //Find highest role index user can do
-    var highestRoleIndex = -1;
-    msg.member.roles.cache.each(role => {
-      let name = role.name;
-      if (!constants.ROLES.includes(name)) {
-        return;
+    } catch(err) {
+      if (err instanceof UserError) {
+        sendErrorMessage(msg, err);
+      } else {
+        throw err;
       }
-      let roleIndex = constants.ROLES.findIndex(val => {return name === val});
-      if (roleIndex > highestRoleIndex) {
-        highestRoleIndex = roleIndex;
-      }
-    });
-
-    if (highestRoleIndex === -1) {
-      throw new UserError(constants.ERRORS.SIGN_UP.NO_ROLE);
-    }
-
-    var request = parseSignupRequest(msg.content);
-  } catch (err) {
-    if (err instanceof UserError) {
-      sendErrorMessage(msg, err);
-    } else {
-      throw err;
     }
     return;
   }
 
-  findTeamListMessage(teamChannel, request.date, gt).then(teamMessage => {
+  var gt = channelMatch[1];
+  var teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
+
+  //Find highest role index user can do
+  var highestRoleIndex = -1;
+  msg.member.roles.cache.each(role => {
+    let name = role.name;
+    if (!constants.ROLES.includes(name)) {
+      return;
+    }
+    let roleIndex = constants.ROLES.findIndex(val => {return name === val});
+    if (roleIndex > highestRoleIndex) {
+      highestRoleIndex = roleIndex;
+    }
+  });
+
+  if (highestRoleIndex === -1) {
+    sendErrorMessage(msg, constants.ERRORS.SIGN_UP.NO_ROLE);
+    return;
+  }
+
+  try {
+    var request = parseSignupRequest(msg.content);
+  } catch(err) {
+    if (err instanceof UserError) {
+      sendErrorMessage(msg, err);
+      return;
+    } else {
+      throw err;
+    }
+  }
+
+  handlePromiseErrors(findTeamListMessage(teamChannel, request.date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
       return;
     }
@@ -80,24 +89,19 @@ client.on("message", (msg) => {
     }
     if (backup) {
       content = content + '\n' + msg.author.toString() + ' ' + request.role;
-      teamMessage.edit(content).catch(err => {handleError(err)});;
-      msg.react("👍")
-      msg.react("🅱️")
-    } else {
-      // Replace filled role with user
-      let regexp = new RegExp('Spot reserved for ' + filledRole + ' or higher');
-      content = content.replace(regexp, msg.author.toString() + ' ' + request.role);
-      teamMessage.edit(content).catch(err => {handleError(err)});;
-      msg.react("👍")
+      return teamMessage.edit(content).then(resp => {
+        return msg.react("👍")
+      }).then(resp => {
+        return msg.react("🅱️")
+      });
     }
-  }).catch(err => {
-    if (err instanceof UserError) {
-      sendErrorMessage(msg, err);
-    } else {
-      throw err;
-    }
-    return;
-  });
+    // Replace filled role with user
+    let regexp = new RegExp('Spot reserved for ' + filledRole + ' or higher');
+    content = content.replace(regexp, msg.author.toString() + ' ' + request.role);
+    return teamMessage.edit(content).then(resp => {
+      return msg.react("👍");
+    });
+  }), msg);
 })
 client.login(process.env.BOT_TOKEN)
 
@@ -134,7 +138,7 @@ const processHostCommand = (msg) => {
     return;
   }
 
-  findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
+  handlePromiseErrors(findTeamListMessage(teamChannel, date, gt).then(teamMessage => {
     if (!teamMessage.author.bot) {
       return;
     }
@@ -144,15 +148,13 @@ const processHostCommand = (msg) => {
         throw new UserError(constants.ERRORS.HOST.NOT_EMPTY);
       }
       let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, msg.author.toString());
-      teamMessage.edit(content).catch(err => {handleError(err)});;
-      msg.react("👍")
+      return teamMessage.edit(content);
     } else if (selectedCommand === '!removehost'){
       if (!teamMessage.content.match(new RegExp(`^HOST: ${msg.author.toString()}$`, 'm'))) {
         throw new UserError(constants.ERRORS.HOST.OTHER_HOST);
       }
       let content = teamMessage.content.replace(/(?<=^HOST: ).*?$/m, hostRole.toString());
-      teamMessage.edit(content).catch(err => {handleError(err)});;
-      msg.react("👍")
+      return teamMessage.edit(content);
     } else if (selectedCommand === '!remove') {
       let replaceMatch = teamMessage.content.match(new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm'));
       if (replaceMatch === null) {
@@ -185,17 +187,11 @@ const processHostCommand = (msg) => {
          throw new UserError(constants.ERRORS.UNKNOWN);
       }
       let content = teamMessage.content.replace(replaceText, replacedText);
-      teamMessage.edit(content).catch(err => {handleError(err)});
-      msg.react("👍")
+      return teamMessage.edit(content);
     }
-  }).catch(err => {
-    if (err instanceof UserError) {
-      sendErrorMessage(msg, err);
-    } else {
-      handleError(err);
-    }
-    return;
-  });
+  }).then(resp => {
+    return msg.react("👍");
+  }), msg);
 }
 
 const findTeamListMessage = (teamChannel, date, gt) => {
@@ -233,8 +229,6 @@ const findTeamListMessage = (teamChannel, date, gt) => {
             if (dateMoment.isSame(tempMoment, 'day')) {
               teamMessage = message;
             }
-          }).catch(error => {
-            handleError(error);
           }));
         }
       }
@@ -316,10 +310,24 @@ Backup:`
 }
 
 const sendErrorMessage = (originalMessage, message) => {
-  originalMessage.react("❌")
-  originalMessage.author.send(message.toString());
+  originalMessage.react("❌").then(resp => {
+    return originalMessage.author.send(message.toString());
+  }).catch(error => {
+    handleError(error);
+  })
 }
 
 const handleError = error => {
   console.error(error);
+}
+
+const handlePromiseErrors = (promise, msg) => {
+  return promise.catch(error => {
+    if (error instanceof UserError) {
+      sendErrorMessage(msg, error);
+    } else {
+      console.error(error);
+      sendErrorMessage(msg, constants.ERRORS.UNKNOWN);
+    }
+  })
 }
