@@ -41,7 +41,7 @@ client.on("message", (msg) => {
 
   try {
     var request = parseSignupRequest(msg.content);
-  } catch(err) {
+  } catch (err) {
     if (err instanceof UserError) {
       sendErrorMessage(msg, err);
       return;
@@ -58,26 +58,16 @@ client.on("message", (msg) => {
     if (checkUserSignedUp(content, msg.author)) {
       throw new UserError(constants.ERRORS.SIGN_UP.ALREADY_SIGNED);
     }
-    let freeRoles = content.match(/(?<=Spot reserved for ).*?(?= or higher)/g);
-    let backup = false;
+    let freeRoles = content.match(/(?<=Spot reserved for ).*?(?= or higher)/g) || [];
     let filledRole;
-    if (freeRoles === null) {
-      //No spots left, add to backup
-      backup = true;
-    } else {
-      //Find which role user will fill
-      filledRole = freeRoles.find(name => {
-        let roleIndex = constants.ROLES.findIndex(val => {return name === val});
-        if (roleIndex <= highestRoleIndex) {
-          return name;
-        }
-      });
-
-      if (!filledRole) {
-        backup = true;
+    //Find which role user will fill
+    filledRole = freeRoles.find(name => {
+      let roleIndex = constants.ROLES.findIndex(val => {return name === val});
+      if (roleIndex <= highestRoleIndex) {
+        return name;
       }
-    }
-    if (backup) {
+    });
+    if (!filledRole) {
       content = content + '\n' + msg.author.toString() + ' ' + request.role;
       return teamMessage.edit(content).then(resp => {
         return msg.react("👍")
