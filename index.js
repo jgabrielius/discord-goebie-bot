@@ -188,7 +188,7 @@ const processHostCommand = (msg) => {
             return findHighestRoleIndex(guildMember) >= replacedRoleIndex
           });
           if (replacedMember) {
-            content = content.replace(new RegExp(`\n${replacedMember}`, 'm'), '');
+            content = content.replace(new RegExp(`\n${escapeRegExp(replacedMember)}`, 'm'), '');
             replacedText = replacedMember;
           }
         }
@@ -352,4 +352,8 @@ const handlePromiseErrors = (promise, msg) => {
       sendErrorMessage(msg, constants.ERRORS.UNKNOWN);
     }
   })
+}
+
+const escapeRegExp = string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
