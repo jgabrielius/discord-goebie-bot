@@ -160,11 +160,11 @@ const processHostCommand = (msg) => {
       let number, replaceText, replacedText;
       if (replaceMatch === null) {
         //If a person is not in team list check if he's in backup list
-        replaceMatch = teamMessage.content.match(new RegExp(`^${user}$`, 'm'));
+        replaceMatch = teamMessage.content.match(new RegExp(`^${user}.*$`, 'm'));
         if (replaceMatch === null) {
           throw new UserError(constants.ERRORS.HOST.USER_NOT_FOUND);
         } else {
-          replaceText = new RegExp(`\n${user}$`, 'm')
+          replaceText = new RegExp(`\n${user}.*$`, 'm')
           replacedText = '';
         }
       } else {
