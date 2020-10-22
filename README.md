@@ -26,7 +26,3 @@ And the following roles:
 6. Run `npm install && npm run dev`
 # Contribution
 Create a feature branch and open a PR to develop branch.
-# TODO Features
-- [ ] Add retrying if request fails
-- [ ] If a spot is open move people from backup to that slot
-- [ ] Allow removing people from backup
