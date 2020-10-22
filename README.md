@@ -24,5 +24,3 @@ And the following roles:
 4. Copy file .env.example to .env
 5. Add your discord bot key to BOT_TOKEN in .env file
 6. Run `npm install && npm run dev`
-# Contribution
-Create a feature branch and open a PR to develop branch.
