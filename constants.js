@@ -31,6 +31,6 @@ Role Request: Poison Tank`
       NOT_EMPTY: 'Hello, your request has been rejected. Reason: host spot already taken for that day.',
       OTHER_HOST: 'Hello, your request has been rejected. Reason: you cannot remove other hosts.'
     },
-    UNKNOWN: 'Hello, your request has been rejected. Reason: unknown. please contact <@159663440011460609>'
+    UNKNOWN: 'Hello, your request has been rejected. Reason: unknown. please contact the bot owner'
   }
 }
