@@ -32,17 +32,7 @@ client.on("message", (msg) => {
   var teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
 
   //Find highest role index user can do
-  var highestRoleIndex = -1;
-  msg.member.roles.cache.each(role => {
-    let name = role.name;
-    if (!constants.ROLES.includes(name)) {
-      return;
-    }
-    let roleIndex = constants.ROLES.findIndex(val => {return name === val});
-    if (roleIndex > highestRoleIndex) {
-      highestRoleIndex = roleIndex;
-    }
-  });
+  var highestRoleIndex = findHighestRoleIndex(msg.member);
 
   if (highestRoleIndex === -1) {
     sendErrorMessage(msg, constants.ERRORS.SIGN_UP.NO_ROLE);
@@ -157,7 +147,7 @@ const processHostCommand = (msg) => {
       return teamMessage.edit(content);
     } else if (selectedCommand === '!remove') {
       let replaceMatch = teamMessage.content.match(new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm'));
-      let number, replaceText, replacedText;
+      let number, replaceText, replacedText, content = teamMessage.content;
       if (replaceMatch === null) {
         //If a person is not in team list check if he's in backup list
         replaceMatch = teamMessage.content.match(new RegExp(`^${user}.*$`, 'm'));
@@ -168,33 +158,52 @@ const processHostCommand = (msg) => {
           replacedText = '';
         }
       } else {
+        let replacedRoleIndex;
         number = replaceMatch[1];
         replaceText = replaceMatch[2];
         switch (number) {
           case '2':
           case '3':
             replacedText = 'Spot reserved for Ancient Goebie or higher';
+            replacedRoleIndex = 5;
             break;
           case '4':
           case '5':
             replacedText = 'Spot reserved for Goebie Ranger or higher';
+            replacedRoleIndex = 3;
             break
           case '6':
           case '7':
             replacedText = 'Spot reserved for Goebie Fetcher or higher';
+            replacedRoleIndex = 2;
             break;
           case '8':
             replacedText = 'Spot reserved for Goebie Caretaker or higher';
+            replacedRoleIndex = 1;
             break;
           case '9':
           case '10':
             replacedText = 'Spot reserved for Young Goebie or higher';
+            replacedRoleIndex = 0;
             break
           default: 
           throw new UserError(constants.ERRORS.UNKNOWN);
         }
+        let backupList = teamMessage.content.match(new RegExp(/(?<=Backup:\n).*$/, 'sm'));
+        if (backupList !== null) {
+          let backupMembers = backupList[0].split('\n');
+          let replacedMember = backupMembers.find(member => {
+            let memberTag = member.match(/(?<=<@).*(?=>)/);
+            let guildMember = teamMessage.channel.guild.members.cache.get(memberTag[0]);
+            return findHighestRoleIndex(guildMember) >= replacedRoleIndex
+          });
+          if (replacedMember) {
+            content = content.replace(new RegExp(`\n${replacedMember}`, 'm'), '');
+            replacedText = replacedMember;
+          }
+        }
       }
-      let content = teamMessage.content.replace(replaceText, replacedText);
+      content = content.replace(replaceText, replacedText);
       return teamMessage.edit(content);
     }
   }).then(resp => {
@@ -297,6 +306,21 @@ const validateSignUpDate = date => {
     throw new UserError(constants.ERRORS.SIGN_UP.EARLY_DATE);
   }
   return date;
+}
+
+const findHighestRoleIndex = member => {
+  let highestRoleIndex = -1;
+  member.roles.cache.each(role => {
+    let name = role.name;
+    if (!constants.ROLES.includes(name)) {
+      return;
+    }
+    let roleIndex = constants.ROLES.findIndex(val => {return name === val});
+    if (roleIndex > highestRoleIndex) {
+      highestRoleIndex = roleIndex;
+    }
+  });
+  return highestRoleIndex;
 }
 
 const generateTeamListMessageText = (requestDate, guild, gt) => {
