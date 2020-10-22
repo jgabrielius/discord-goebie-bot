@@ -157,34 +157,42 @@ const processHostCommand = (msg) => {
       return teamMessage.edit(content);
     } else if (selectedCommand === '!remove') {
       let replaceMatch = teamMessage.content.match(new RegExp(`^#(\\d\\d?): (${user}.*)$`, 'm'));
+      let number, replaceText, replacedText;
       if (replaceMatch === null) {
-        throw new UserError(constants.ERRORS.HOST.USER_NOT_FOUND);
-      }
-      let number = replaceMatch[1];
-      let replaceText = replaceMatch[2];
-      let replacedText;
-      switch (number) {
-        case '2':
-        case '3':
-          replacedText = 'Spot reserved for Ancient Goebie or higher';
-          break;
-        case '4':
-        case '5':
-          replacedText = 'Spot reserved for Goebie Ranger or higher';
-          break
-        case '6':
-        case '7':
-          replacedText = 'Spot reserved for Goebie Fetcher or higher';
-          break;
-        case '8':
-          replacedText = 'Spot reserved for Goebie Caretaker or higher';
-          break;
-        case '9':
-        case '10':
-          replacedText = 'Spot reserved for Young Goebie or higher';
-          break
-        default: 
-         throw new UserError(constants.ERRORS.UNKNOWN);
+        //If a person is not in team list check if he's in backup list
+        replaceMatch = teamMessage.content.match(new RegExp(`^${user}$`, 'm'));
+        if (replaceMatch === null) {
+          throw new UserError(constants.ERRORS.HOST.USER_NOT_FOUND);
+        } else {
+          replaceText = new RegExp(`\n${user}$`, 'm')
+          replacedText = '';
+        }
+      } else {
+        number = replaceMatch[1];
+        replaceText = replaceMatch[2];
+        switch (number) {
+          case '2':
+          case '3':
+            replacedText = 'Spot reserved for Ancient Goebie or higher';
+            break;
+          case '4':
+          case '5':
+            replacedText = 'Spot reserved for Goebie Ranger or higher';
+            break
+          case '6':
+          case '7':
+            replacedText = 'Spot reserved for Goebie Fetcher or higher';
+            break;
+          case '8':
+            replacedText = 'Spot reserved for Goebie Caretaker or higher';
+            break;
+          case '9':
+          case '10':
+            replacedText = 'Spot reserved for Young Goebie or higher';
+            break
+          default: 
+          throw new UserError(constants.ERRORS.UNKNOWN);
+        }
       }
       let content = teamMessage.content.replace(replaceText, replacedText);
       return teamMessage.edit(content);
