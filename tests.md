@@ -28,6 +28,11 @@ Test Signup with each these roles:
 4. Test host commands:
 	* Test host some day multiple times
 	* Test host day with no list
+	* Test remove host
+	* Test remove host no list
+	* Test remove host twice
 	* Test remove person wrong date
 	* Test remove person not signed up
 	* Test remove person
+	* Test remove and fill from backup
+	* Test remove and not fill due to role
