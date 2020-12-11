@@ -110,7 +110,7 @@ const processHostCommand = (msg) => {
     return;
   }
     
-  let hostCommandMatch = msg.content.match(/^!host (.*)$/);
+  let hostCommandMatch = msg.content.match(/^!host \s*(.*)$/);
   let date = null, user = null, selectedCommand = null;
   if (hostCommandMatch !== null) {
     date = validateSignUpDate(hostCommandMatch[1]);
@@ -331,7 +331,7 @@ const findHighestRoleIndex = member => {
 
 const generateTeamListMessageText = (requestMoment, guild, gt) => {
   let hostRole = guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
-  requestDate = requestMoment.format('DD-MM-YYYY');
+  requestDate = requestMoment.format('D/M/YYYY');
   return `Raid team 1, ${gt}.00 GT ${requestDate}
 
 HOST: ${hostRole}
