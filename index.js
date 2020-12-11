@@ -93,7 +93,23 @@ const processHostCommand = (msg) => {
 
   let gt = hostChannelMatch[1];
   let teamChannel = client.channels.cache.find(channel => channel.name === gt + constants.TEAM_LIST_CHANNEL);
-
+  
+  if (msg.content.match(/!help/)) {
+    let hostChannel = client.channels.cache.find(channel => channel.name === gt + constants.HOSTS_CHANNEL);
+    const embed = new Discord.MessageEmbed()
+    .setColor('#0099ff')
+    .setTitle('Hosting commands')
+    .setDescription('These commands are only available in ' + hostChannel.toString())
+    .addFields(
+      { name: '\u200B', value: '**!host ' + moment().format(constants.SIGN_UP_DATE_FORMAT) + '**\nMakes you host for selected date' },
+      { name: '\u200B', value: '**!removehost ' + moment().format(constants.SIGN_UP_DATE_FORMAT) + '**\nRemoves you from hosting for selected date' },
+      { name: '\u200B', value: '**!remove #2' + ' ' + moment().format(constants.SIGN_UP_DATE_FORMAT) + '**\nRemoves person with specified # from team list for selected date', },
+      { name: '\u200B', value: '**!remove ' + client.user.toString() + ' ' + moment().format(constants.SIGN_UP_DATE_FORMAT) + '**\nRemoves mentioned person from team list for selected date', },
+      )
+    hostChannel.send(embed);
+    return;
+  }
+    
   let hostCommandMatch = msg.content.match(/^!host (.*)$/);
   let date = null, user = null, selectedCommand = null;
   if (hostCommandMatch !== null) {
@@ -232,7 +248,7 @@ const findTeamListMessage = (teamChannel, date, gt) => {
           if (dateMoment.isBefore(tempMoment, 'day')) {
             break;
           }
-          promises.push(teamChannel.send(generateTeamListMessageText(tempDate, teamChannel.guild, gt)).then(message => {
+          promises.push(teamChannel.send(generateTeamListMessageText(tempMoment, teamChannel.guild, gt)).then(message => {
             if (dateMoment.isSame(tempMoment, 'day')) {
               teamMessage = message;
             }
@@ -313,8 +329,9 @@ const findHighestRoleIndex = member => {
   return highestRoleIndex;
 }
 
-const generateTeamListMessageText = (requestDate, guild, gt) => {
+const generateTeamListMessageText = (requestMoment, guild, gt) => {
   let hostRole = guild.roles.cache.find(r => r.name === constants.HOST_ROLE);
+  requestDate = requestMoment.format('DD-MM-YYYY');
   return `Raid team 1, ${gt}.00 GT ${requestDate}
 
 HOST: ${hostRole}
