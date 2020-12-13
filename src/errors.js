@@ -30,7 +30,7 @@ const sendSignupErrorMessage = (msg, error) => {
       .setTitle('Error while processing your sign-up request')
       .setDescription(`**__Reason: ${error}__**`)
       .addFields(
-        { name: '\u200B', value: `Please delete your signup and try again in ${msg.channel}` },
+        { name: '\u200B', value: `Please delete your signup in ${msg.channel} and try again` },
         { name: 'Sign-up format', value: `Sign-up date: <DD/MM/YYYY>\nRSN: <Username>\nRole Request: <Request, N/A if you don't mind>` },
         { name: 'Example sign-up', value: `Sign-up date: ${today}\nRSN: ${msg.author.username}\nRole Request: N/A` },
       ));
