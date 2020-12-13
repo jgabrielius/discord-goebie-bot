@@ -28,6 +28,7 @@ Test Signup with each these roles:
 4. Test host commands:
 	* Test host some day multiple times
 	* Test host day with no list
+	* Test help command
 	* Test remove host
 	* Test remove host no list
 	* Test remove host twice
