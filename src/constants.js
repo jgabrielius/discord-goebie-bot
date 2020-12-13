@@ -11,30 +11,20 @@ module.exports = {
   TEAM_LIST_DATE_FORMAT: 'DD/MM/YYYY',
   ERRORS: {
     SIGN_UP: {
-      PAST_DATE: 'Hello, your request has been rejected. Reason: sign up date cannot be in the past.',
-      INVALID_DATE: 'Hello, your request has been rejected. Reason: sign up date invalid.',
-      EARLY_DATE: 'Hello, your request has been rejected. Reason: you can only sign up 5 days in advance.',
-      NO_ROLE: 'Hello, your request has been rejected. Reason: you have no role assigned.',
-      ALREADY_SIGNED: 'Hello, your request has been rejected. Reason: you have already registered for this date.',
-      INVALID_FORMAT: `Hello, your sign up has been rejected. Reason: invalid format. Please use the correct sign up format:
-
-Sign-up date: <DD/MM/YYYY>
-RSN: <Username>
-Role Request: <Request, N/A if you don't mind>
-
-Example:
-
-Sign-up date: 20/12/2018
-RSN: Luckyluke91
-Role Request: Poison Tank`
+      PAST_DATE: 'Sign-up date cannot be in the past.',
+      INVALID_DATE: 'Sign-up date invalid.',
+      EARLY_DATE: 'You can only sign up 5 days in advance.',
+      NO_ROLE: 'No role assigned. Please asign yourself a role in <#585510907678031907>',
+      ALREADY_SIGNED: 'You have already signed up for this date.',
+      INVALID_FORMAT: 'Invalid format.'
     },
     HOST: {
-      CANNOT_EDIT: 'cant edit',
-      NO_HOSTS: 'cant remove no host',
+      CANNOT_EDIT: 'Hello, your request has been rejected. Reason: cannot edit team list since it was not posted by bot.',
+      NO_HOSTS: 'Hello, your request has been rejected. Reason: team list does not have a host to remove.',
       USER_NOT_FOUND: 'Hello, your request has been rejected. Reason: user not found.',
       NOT_EMPTY: 'Hello, your request has been rejected. Reason: host spot already taken for that day.',
       OTHER_HOST: 'Hello, your request has been rejected. Reason: you cannot remove other hosts.'
     },
-    UNKNOWN: 'Hello, your request has been rejected. Reason: unknown. Please contact the bot owner'
+    UNKNOWN: 'Hello, your request has been rejected. Reason: Unknown. Please contact the bot owner <@159663440011460609>.'
   }
 }

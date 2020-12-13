@@ -161,7 +161,7 @@ const getFilledContent = (message, content, emptySlot) => {
   return content;
 }
 
-const proccessCommandHelp = msg => {
+const processCommandHelp = msg => {
   let hostChannel = getHostsChannel(msg);
   let today = moment().format(constants.INPUT_DATE_FORMAT);
   hostChannel.send(new Discord.MessageEmbed()
@@ -171,7 +171,6 @@ const proccessCommandHelp = msg => {
     .addFields(
       { name: '\u200B', value: `**!host ${today}**\nMakes you host for selected date` },
       { name: '\u200B', value: `**!removehost ${today}**\nRemoves you from hosting for selected date` },
-      { name: '\u200B', value: `**!remove #2 ${today}**\nRemoves person with specified # from team list for selected date` },
       { name: '\u200B', value: `**!remove ${msg.client.user} ${today}**\nRemoves mentioned person from team list for selected date` },
     ));
 }
@@ -192,7 +191,7 @@ const processCommandHost = msg => {
   }), msg), msg);
 }
 
-const proccessCommandRemoveHost = msg => {
+const processCommandRemoveHost = msg => {
   let date = getRemoveHostDate(msg);
   handlePromiseErrors(reactSuccess(findTeamListMessage(msg, date).then(message => {
     if (message.author != msg.client.user) {
@@ -213,7 +212,7 @@ const proccessCommandRemoveHost = msg => {
   }), msg), msg);
 }
 
-const proccessCommandRemove = msg => {
+const processCommandRemove = msg => {
   let request = parseRemoveCommand(msg);
   handlePromiseErrors(reactSuccess(findTeamListMessage(msg, request.date).then(message => {
     if (message.author != msg.client.user) {
@@ -242,13 +241,13 @@ const proccessCommandRemove = msg => {
 
 const processHostCommand = msg => {
   if (isCommandHelp(msg)) {
-    proccessCommandHelp(msg);
+    processCommandHelp(msg);
   } else if (isCommandHost(msg)) {
     processCommandHost(msg);
   } else if (isCommandRemoveHost(msg)) {
-    proccessCommandRemoveHost(msg);
+    processCommandRemoveHost(msg);
   } else if (isCommandRemove(msg)) {
-    proccessCommandRemove(msg);
+    processCommandRemove(msg);
   }
 }
 

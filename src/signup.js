@@ -1,6 +1,6 @@
 const constants = require('./constants');
 const { validateDate, findTeamListMessage, reactSuccess, findHighestRoleIndex } = require('./helpers');
-const { UserError, handlePromiseErrors } = require('./errors');
+const { handlePromiseErrors, SignupError, UserError } = require('./errors');
 
 
 const isSignup = msg => {
@@ -9,19 +9,25 @@ const isSignup = msg => {
 
 const parseSignupRequest = msg => {
   let messageParts = msg.content.split('\n'), request = {};
-  if (![2,3].includes(messageParts.length)) {
-    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
+  if (![2, 3].includes(messageParts.length)) {
+    throw new SignupError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
 
   let date = messageParts[0].match(/^(?:Date: |Sign-up date: ?)?(.*?)\s*$/)
   if (date === null) {
-    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
+    throw new SignupError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
-  request.date = validateDate(date[1]);
+  try {
+    request.date = validateDate(date[1]);
+  } catch (err) {
+    if (err instanceof UserError) {
+      throw new SignupError(err);
+    }
+  }
 
-  let rsn = messageParts[1].match(/^(?:RSN: ?)?(.*)$/)
+  let rsn = messageParts[1].match(/^(?:RSN:\s*)?(.*)$/)
   if (rsn === null) {
-    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
+    throw new SignupError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
   request.rsn = rsn[1];
 
@@ -46,7 +52,7 @@ const isUserAlreadyRegistered = (message, user) => {
 const findHighestRoleForUser = (message, user) => {
   let highestRoleIndex = findHighestRoleIndex(user);
   if (highestRoleIndex === -1) {
-    throw new UserError(constants.ERRORS.SIGN_UP.NO_ROLE);
+    throw new SignupError(constants.ERRORS.SIGN_UP.NO_ROLE);
   }
   let freeRoles = message.content.match(/(?<=Spot reserved for ).*?(?= or higher)/g) || [];
   return freeRoles.find(name => {
@@ -57,31 +63,37 @@ const findHighestRoleForUser = (message, user) => {
   });
 }
 
-const proccessSignUpCommand = msg => {
+const processSignUpCommand = msg => {
   let request = parseSignupRequest(msg);
   handlePromiseErrors(reactSuccess(findTeamListMessage(msg, request.date).then(message => {
     if (message.author != msg.client.user) {
       return;
     }
     if (isUserAlreadyRegistered(message, msg.author)) {
-      throw new UserError(constants.ERRORS.SIGN_UP.ALREADY_SIGNED);
+      throw new SignupError(constants.ERRORS.SIGN_UP.ALREADY_SIGNED);
     }
     
     let content = message.content;
     let filledRole = findHighestRoleForUser(message, msg.member);
+    let requestMessage;
+    if (msg.author.username !== request.rsn) {
+      requestMessage = `${msg.author} (RSN: ${request.rsn}) ${request.role}`;
+    } else {
+      requestMessage = `${msg.author} ${request.role}`;
+    }
     //Add to backup
     if (!filledRole) {
-      return message.edit(content + `\n${msg.author} ${request.role}`).then(() => {
+      return message.edit(content + `\n${requestMessage}`).then(() => {
         return msg.react("🅱️")
       });
     }
     // Replace filled role with user
     let regexp = new RegExp(`Spot reserved for ${filledRole} or higher`);
-    return message.edit(content.replace(regexp, `${msg.author} ${request.role}`));
+    return message.edit(content.replace(regexp, requestMessage));
   }), msg), msg);
 }
 
 module.exports = {
   isSignup,
-  proccessSignUpCommand
+  processSignUpCommand
 }
