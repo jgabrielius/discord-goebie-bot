@@ -7,6 +7,8 @@ module.exports = {
   MAX_DAYS_IN_ADVANCE:  5,
   RETRY_LIMIT: 5,
   SIGN_UP_DATE_FORMAT: 'D/M/YYYY',
+  INPUT_DATE_FORMAT: 'D/M/YYYY',
+  TEAM_LIST_DATE_FORMAT: 'DD/MM/YYYY',
   ERRORS: {
     SIGN_UP: {
       PAST_DATE: 'Hello, your request has been rejected. Reason: sign up date cannot be in the past.',
@@ -27,6 +29,8 @@ RSN: Luckyluke91
 Role Request: Poison Tank`
     },
     HOST: {
+      CANNOT_EDIT: 'cant edit',
+      NO_HOSTS: 'cant remove no host',
       USER_NOT_FOUND: 'Hello, your request has been rejected. Reason: user not found.',
       NOT_EMPTY: 'Hello, your request has been rejected. Reason: host spot already taken for that day.',
       OTHER_HOST: 'Hello, your request has been rejected. Reason: you cannot remove other hosts.'
