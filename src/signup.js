@@ -76,7 +76,7 @@ const processSignUpCommand = msg => {
     let content = message.content;
     let filledRole = findHighestRoleForUser(message, msg.member);
     let requestMessage;
-    if (msg.author.username !== request.rsn) {
+    if (msg.member.nickname.toUpperCase() !== request.rsn.toUpperCase()) {
       requestMessage = `${msg.author} (RSN: ${request.rsn}) ${request.role}`;
     } else {
       requestMessage = `${msg.author} ${request.role}`;
