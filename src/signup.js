@@ -25,7 +25,7 @@ const parseSignupRequest = msg => {
     }
   }
 
-  let rsn = messageParts[1].match(/^(?:RSN:\s*)?(.*)$/)
+  let rsn = messageParts[1].match(/^(?:RSN:\s*)?(.*?)\s*$/)
   if (rsn === null) {
     throw new SignupError(constants.ERRORS.SIGN_UP.INVALID_FORMAT);
   }
