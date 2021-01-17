@@ -122,18 +122,18 @@ const getUserById = (channel, id) => {
   return channel.guild.members.cache.get(id);
 }
 
-const getUserAccountAtSlot = (message, slot) => {
-  let match = message.content.match(new RegExp(`(?<=#${slot}: <@).*(?=>)`))
+const getUserAccountAtSlot = (channel, content, slot) => {
+  let match = content.match(new RegExp(`(?<=#${slot}: <@).*(?=>)`))
   if (match) {
-    return getUserById(message.channel, match[0]);
+    return getUserById(channel, match[0]);
   }
 }
 
 const getFilledContent = (message, content, emptySlot) => {
-  //Look who can fill empty slot starting from top moving down
+  //Look who can fill empty slot starting from one below removed slot moving down
   let emptyRoleInfo = getRoleTextAndIndex(emptySlot);
-  for (let i = 2; i <= 10; i++) {
-    let user = getUserAccountAtSlot(message, i);
+  for (let i = parseInt(emptySlot) + 1; i <= 10; i++) {
+    let user = getUserAccountAtSlot(message.channel, content, i);
     if (user) {
       let roleInfo = getRoleTextAndIndex(i);
       let highestUserRoleIndex = findHighestRoleIndex(user);
