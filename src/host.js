@@ -76,6 +76,9 @@ const getBackupList = message => {
 
 const getUserTextAndSlot = (content, user, slot) => {
   let match = content.match(new RegExp(`^#(${slot ? slot : '\\d\\d?'}): (${user}.*)$`, 'm'));
+  if (!match) {
+    throw new Error(`User text and slot not found. user: ${user}, slot: ${slot}, content: ${content}`);
+  }
   return {
     slot: match[1],
     text: match[2]
