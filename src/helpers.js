@@ -23,7 +23,7 @@ const validateDate = date => {
   if (!momentDate.isValid()) {
     throw new UserError(constants.ERRORS.SIGN_UP.INVALID_DATE);
   } else if (momentDate.isBefore(moment(), 'day')) {
-    //throw new UserError(constants.ERRORS.SIGN_UP.PAST_DATE);
+    throw new UserError(constants.ERRORS.SIGN_UP.PAST_DATE);
   } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
     throw new UserError(constants.ERRORS.SIGN_UP.EARLY_DATE);
   }
