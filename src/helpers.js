@@ -21,11 +21,11 @@ const getHostRoleFromChannel = channel => {
 const validateDate = date => {
   momentDate = moment(date, constants.INPUT_DATE_FORMAT, true);
   if (!momentDate.isValid()) {
-    throw new UserError(constants.ERRORS.SIGN_UP.INVALID_DATE);
+    throw new UserError(constants.ERRORS.DATE.INVALID);
   } else if (momentDate.isBefore(moment(), 'day')) {
-    throw new UserError(constants.ERRORS.SIGN_UP.PAST_DATE);
+    throw new UserError(constants.ERRORS.DATE.PAST);
   } else if (momentDate.isAfter(moment().add(constants.MAX_DAYS_IN_ADVANCE, 'day'), 'day')) {
-    throw new UserError(constants.ERRORS.SIGN_UP.EARLY_DATE);
+    throw new UserError(constants.ERRORS.DATE.EARLY);
   }
   return momentDate;
 }
@@ -85,6 +85,9 @@ const findTeamListMessage = (msg, date) => {
         }
       }
       return Promise.all(promises).then(() => {
+        if (teamMessage.author != msg.client.user) {
+          throw new UserError(constants.ERRORS.CANNOT_EDIT);
+        }
         return teamMessage
       })
     })
@@ -112,6 +115,10 @@ const escapeRegExp = string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
+const isHost = (message, host) => {
+  return new RegExp(`^HOST: ${host}$`, 'm').test(message.content);
+}
+
 module.exports = {
   getGameTimeFromMessage,
   getTeamChannel,
@@ -120,5 +127,6 @@ module.exports = {
   findTeamListMessage,
   reactSuccess,
   findHighestRoleIndex,
-  escapeRegExp
+  escapeRegExp,
+  isHost
 }
