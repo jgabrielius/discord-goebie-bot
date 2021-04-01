@@ -9,7 +9,7 @@ const hostCommandRegex = /^!host \s*(.*)$/;
 const removeHostCommandRegex = /^!removehost \s*(.*)$/;
 const removeCommandRegex = /^!remove \s*(<.*>) \s*(.*)$/;
 const helpCommandRegex = /^!mahelp$/;
-const listCommandRegex = /^!list$/;
+const listCommandRegex = /^!list\s*$/;
 
 const isHostCommand = msg => {
   return new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`).test(msg.channel.name);
