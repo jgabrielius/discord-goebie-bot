@@ -8,7 +8,8 @@ const { removePersonFromTeam } = require('./remove');
 const hostCommandRegex = /^!host \s*(.*)$/;
 const removeHostCommandRegex = /^!removehost \s*(.*)$/;
 const removeCommandRegex = /^!remove \s*(<.*>) \s*(.*)$/;
-const helpCommandRegex = /^!help$/;
+const helpCommandRegex = /^!mahelp$/;
+const listCommandRegex = /^!list$/;
 
 const isHostCommand = msg => {
   return new RegExp(`^(\\d\\d)${constants.HOSTS_CHANNEL}$`).test(msg.channel.name);
@@ -32,6 +33,10 @@ const isCommandRemoveHost = msg => {
 
 const isCommandRemove = msg => {
   return removeCommandRegex.test(msg.content);
+}
+
+const isCommandList = msg => {
+  return listCommandRegex.test(msg.content);
 }
 
 const getHostDate = msg => {
@@ -70,6 +75,7 @@ const processCommandHelp = msg => {
       { name: '\u200B', value: `**!host ${today}**\nMakes you host for selected date` },
       { name: '\u200B', value: `**!removehost ${today}**\nRemoves you from hosting for selected date` },
       { name: '\u200B', value: `**!remove ${msg.client.user} ${today}**\nRemoves mentioned person from team list for selected date` },
+      { name: '\u200B', value: `**!list**\nSends a private message with today's list formatted for copying and pasting` },
     ));
 }
 
@@ -107,6 +113,20 @@ const processCommandRemove = msg => {
   removePersonFromTeam(msg, request.date, request.user);
 }
 
+const processCommandList = msg => {
+  handlePromiseErrors(reactSuccess(findTeamListMessage(msg, moment()).then(message => {
+    let content = message.content;
+    message.mentions.users.map(user => {
+      content = content.replace(user.toString(), '@' + user.username);
+    })
+    message.mentions.roles.map(role => {
+      content = content.replace(role.toString(), '@' + role.name);
+    })
+    content = content.split('Backup:')[0] + "Log in and ask for invites! Replacing at :50 GT";
+    return msg.author.send(content);
+  }), msg), msg);
+}
+
 const processHostCommand = msg => {
   if (isCommandHelp(msg)) {
     processCommandHelp(msg);
@@ -116,6 +136,8 @@ const processHostCommand = msg => {
     processCommandRemoveHost(msg);
   } else if (isCommandRemove(msg)) {
     processCommandRemove(msg);
+  } else if (isCommandList(msg)) {
+    processCommandList(msg);
   }
 }
 
