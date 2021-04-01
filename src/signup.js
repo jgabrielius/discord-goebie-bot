@@ -1,7 +1,9 @@
 const constants = require('./constants');
 const { validateDate, findTeamListMessage, reactSuccess, findHighestRoleIndex } = require('./helpers');
-const { handlePromiseErrors, SignupError, UserError } = require('./errors');
+const { handlePromiseErrors, SignupError, UserError, RemoveError } = require('./errors');
+const { removePersonFromTeam } = require('./remove');
 
+const removeCommandRegex = /^!remove \s*(.*)$/;
 
 const isSignup = msg => {
   return new RegExp(`^(\\d\\d)${constants.SIGN_UP_CHANNEL}$`).test(msg.channel.name);
@@ -64,11 +66,16 @@ const findHighestRoleForUser = (message, user) => {
 }
 
 const processSignUpCommand = msg => {
+  if (isCommandRemove(msg)) {
+    processCommandRemove(msg);
+  } else {
+    processCommandSignUp(msg);
+  }
+}
+
+const processCommandSignUp = msg => {
   let request = parseSignupRequest(msg);
   handlePromiseErrors(reactSuccess(findTeamListMessage(msg, request.date).then(message => {
-    if (message.author != msg.client.user) {
-      return;
-    }
     if (isUserAlreadyRegistered(message, msg.author)) {
       throw new SignupError(constants.ERRORS.SIGN_UP.ALREADY_SIGNED);
     }
@@ -92,6 +99,32 @@ const processSignUpCommand = msg => {
     let regexp = new RegExp(`Spot reserved for ${filledRole} or higher`);
     return message.edit(content.replace(regexp, requestMessage));
   }), msg), msg);
+}
+
+const isCommandRemove = msg => {
+  return removeCommandRegex.test(msg.content);
+}
+
+const processCommandRemove = msg => {
+  let request = parseRemoveCommand(msg);
+  removePersonFromTeam(msg, request.date, request.user);
+}
+
+const parseRemoveCommand = msg => {
+  let match = msg.content.match(removeCommandRegex);
+  let date;
+  try {
+    date = validateDate(match[1]);
+  } catch (err) {
+    if (err instanceof UserError) {
+      throw new RemoveError(err);
+    }
+  }
+
+  return {
+    date: date,
+    user: msg.author.toString()
+  };
 }
 
 module.exports = {

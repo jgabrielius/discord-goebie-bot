@@ -13,27 +13,34 @@ class UserError extends Error {
 }
 
 class SignupError extends UserError {};
+class RemoveError extends UserError {};
 
-const sendErrorMessage = (msg, message) => {
-  msg.react("❌").then(() => {
-    return msg.author.send(message.toString());
-  }).catch(error => {
-    console.error(error);
-  })
-}
-
-const sendSignupErrorMessage = (msg, error) => {
+const handleError = (msg, error) => {
   msg.react("❌").then(() => {
     let today = moment().format(constants.INPUT_DATE_FORMAT);
-    return msg.author.send(new Discord.MessageEmbed()
+    let embed = new Discord.MessageEmbed()
       .setColor('#f54242')
-      .setTitle('Error while processing your sign-up request')
-      .setDescription(`**__Reason: ${error}__**`)
-      .addFields(
-        { name: '\u200B', value: `Please delete your signup in ${msg.channel} and try again` },
+      .setTitle('Error occurred while processing your request')
+      .setDescription(`**__Reason: ${error}__**`);
+    
+    if (error instanceof SignupError) {
+      embed.addFields(
         { name: 'Sign-up format', value: `Sign-up date: <DD/MM/YYYY>\nRSN: <Username>\nRole Request: <Request, N/A if you don't mind>` },
         { name: 'Example sign-up', value: `Sign-up date: ${today}\nRSN: ${msg.author.username}\nRole Request: N/A` },
-      ));
+      );
+    } else if (error instanceof RemoveError) {
+      embed.addFields(
+        { name: 'Remove command format', value: `!remove <DD/MM/YYYY>` },
+        { name: 'Example', value: `!remove ${today}` },
+      );
+    } else if (error instanceof UserError) {
+      embed.setDescription(`**__Reason: ${error}__**`);
+    } else {
+      console.error(error);
+      embed.setDescription(`**__Reason: ${constants.ERRORS.UNKNOWN}__**`);
+    }
+    
+    return msg.author.send(embed);
   }).catch(error => {
     console.error(error);
   })
@@ -41,21 +48,14 @@ const sendSignupErrorMessage = (msg, error) => {
 
 const handlePromiseErrors = (promise, msg) => {
   return promise.catch(error => {
-    if (error instanceof SignupError) {
-      sendSignupErrorMessage(msg, error);
-    } else if (error instanceof UserError) {
-      sendErrorMessage(msg, error);
-    } else {
-      console.error(error);
-      sendErrorMessage(msg, constants.ERRORS.UNKNOWN);
-    }
+    handleError(msg, error);
   })
 }
 
 module.exports = {
   UserError,
   SignupError,
+  RemoveError,
   handlePromiseErrors,
-  sendErrorMessage,
-  sendSignupErrorMessage
+  handleError
 }
